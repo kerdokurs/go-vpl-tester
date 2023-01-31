@@ -10,9 +10,7 @@ To install the tool, run `go install github.com/kerdokurs/go-vpl-tester`
 
 ### Running tests
 
-```bash
-go-vpl-tester <cases file>
-```
+See `go-vpl-tester help`
 
 ### Cases file
 

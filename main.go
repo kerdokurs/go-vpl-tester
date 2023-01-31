@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 	"time"
 )
 
@@ -13,6 +14,11 @@ var casesFile = flag.String("tests", "tests.cases", "test cases file")
 
 func main() {
 	flag.Parse()
+
+	if len(os.Args) == 2 && os.Args[1] == "help" {
+		flag.Usage()
+		os.Exit(0)
+	}
 
 	if tests, err := loadTests(); err != nil {
 		log.Fatalf("Could not load tests: %v\n", err)
