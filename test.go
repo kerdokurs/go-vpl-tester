@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/go-ini/ini"
+	"io"
 	"log"
-	"os"
+	"plugin"
+	"time"
 )
 
 type Test struct {
@@ -14,22 +16,13 @@ type Test struct {
 	Args      []string
 	Program   string
 	CompareTo string
+	Plugin    string
+	Timeout   *time.Duration
 }
 
 func loadTests() ([]Test, error) {
-	file, err := os.Open(*casesFile)
-	if err != nil {
-		return nil, err
-	}
-	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-			log.Printf("Could not close file: %v\n", err)
-		}
-	}(file)
-
 	tests := make([]Test, 0)
-	cfg, err := ini.Load(file)
+	cfg, err := ini.Load(*casesFile)
 	if err != nil {
 		panic(err)
 	}
@@ -56,11 +49,34 @@ func runTest(t *Test) bool {
 	if t.Program != "" {
 		programToRun = t.Program
 	}
-	studentOutput := runProgram(programToRun, t.Input, t.Args...)
+	timeout := *testTimeout
+	if t.Timeout != nil {
+		timeout = *t.Timeout
+	}
+
+	var customFunc func(w io.Writer, outCh chan string, isResultClosingCh chan struct{}, resultCh chan string)
+	if t.Plugin != "" {
+		pl, err := plugin.Open(t.Plugin)
+		if err != nil {
+			log.Printf("pluginat %v ei leidu\n", t.Plugin)
+			return false
+		}
+		funcSymbol, err := pl.Lookup("Run")
+		if err != nil {
+			log.Printf("plugin %v ei sisalda Run funktsiooni\n", t.Plugin)
+			return false
+		}
+
+		customFunc = funcSymbol.(func(w io.Writer, outCh chan string, isResultClosingCh chan struct{}, resultCh chan string))
+	}
+
+	studentOutput := runProgram(programToRun, t.Input, customFunc, timeout, t.Args...)
 
 	correctOutput := t.Output
-	if correctOutput == "" {
-		correctOutput = runProgram(t.CompareTo, t.Input, t.Args...)
+	if correctOutput == "" && t.CompareTo != "" {
+		correctOutput = runProgram(t.CompareTo, t.Input, customFunc, timeout, t.Args...)
+	} else if correctOutput == "" {
+		correctOutput = "OK"
 	}
 
 	if studentOutput != correctOutput {
