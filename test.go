@@ -8,23 +8,25 @@ import (
 )
 
 type Test struct {
-	Case   string
-	Input  string
-	Output string
-	Args   []string
+	Case      string
+	Input     string
+	Output    string
+	Args      []string
+	Program   string
+	CompareTo string
 }
 
 func loadTests() ([]Test, error) {
-	p := "test.cases"
-	if len(os.Args) > 1 {
-		p = os.Args[1]
-	}
-
-	file, err := os.Open(p)
+	file, err := os.Open(*casesFile)
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			log.Printf("Could not close file: %v\n", err)
+		}
+	}(file)
 
 	tests := make([]Test, 0)
 	cfg, err := ini.Load(file)
@@ -50,11 +52,20 @@ func loadTests() ([]Test, error) {
 }
 
 func runTest(t *Test) bool {
-	studentOutput := runProgram(testerEndpoint, t.Input, t.Args...)
+	programToRun := *testerEntrypoint
+	if t.Program != "" {
+		programToRun = t.Program
+	}
+	studentOutput := runProgram(programToRun, t.Input, t.Args...)
 
-	if studentOutput != t.Output {
+	correctOutput := t.Output
+	if correctOutput == "" {
+		correctOutput = runProgram(t.CompareTo, t.Input, t.Args...)
+	}
+
+	if studentOutput != correctOutput {
 		fmt.Println("\nComment :=>>- Ootasin väljundit:")
-		preFormat(t.Output)
+		preFormat(correctOutput)
 		fmt.Println("Comment :=>>- Aga sain:")
 		preFormat(studentOutput)
 		return false
@@ -66,7 +77,7 @@ func runTest(t *Test) bool {
 
 func runTests(tests []Test) {
 	nTests := len(tests)
-	gradePoint := float32(maxGrade) / float32(nTests)
+	gradePoint := float32(*maxGrade) / float32(nTests)
 	var grade float32
 
 	for i, test := range tests {

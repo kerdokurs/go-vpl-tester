@@ -1,0 +1,10 @@
+[Input/Output]
+Args = test
+Input = 1
+Output = 2
+
+[Comparison]
+Args = test
+Input = 1
+Program = ./out/tester
+CompareTo = ./out/comparison

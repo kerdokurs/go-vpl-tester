@@ -22,7 +22,7 @@ func runProgram(program, input string, args ...string) string {
 
 	errCh := make(chan error)
 	defer func() { close(errCh) }()
-	timeout := time.NewTimer(testTimeout)
+	timeout := time.NewTimer(*testTimeout)
 
 	go func() {
 		if err := cmd.Run(); err != nil && strings.Contains(err.Error(), "killed") {

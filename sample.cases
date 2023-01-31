@@ -1,17 +1,4 @@
-[Väike kolmnurk]
-Args = kolmnurk
+[Input/Output]
+Args = test
 Input = 1
-Output = *
-
-[Kolmnurk (näide)]
-Args = kolmnurk
-Input = 5
-Output = """*
-**
-***
-****
-*****
-****
-***
-**
-*"""
+Output = 2
