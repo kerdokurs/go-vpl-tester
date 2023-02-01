@@ -4,7 +4,7 @@ Test any program with given input, output and arguments.
 
 ## Installation
 
-To install the tool, run `go install github.com/kerdokurs/go-vpl-tester`
+To install the tool, run `go install github.com/kerdokurs/go-vpl-tester@v0.0.2`
 
 ## Usage
 
